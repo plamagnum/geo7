@@ -1,0 +1,14 @@
+# Файли середовища (містять секрети)
+.env
+
+# Docker volumes (локальні дані)
+mysql_data/
+
+# macOS
+.DS_Store
+
+# Editor files
+.idea/
+.vscode/
+*.swp
+*.swo

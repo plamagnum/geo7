@@ -1,0 +1,89 @@
+version: '3.8'
+
+# Docker Compose конфігурація для Geo7 — веб-додатку тестів з географії
+services:
+
+  # Nginx — веб-сервер / reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: geo7_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+    restart: unless-stopped
+    networks:
+      - geo7_network
+
+  # PHP-FPM — обробка PHP-запитів
+  php:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    container_name: geo7_php
+    volumes:
+      - ./src:/var/www/html
+    environment:
+      - DB_HOST=${DB_HOST:-mysql}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_NAME=${DB_NAME:-geo7}
+      - DB_USER=${DB_USER:-geo7user}
+      - DB_PASS=${DB_PASS:-geo7pass}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - geo7_network
+
+  # MySQL 8 — база даних
+  mysql:
+    image: mysql:8.0
+    container_name: geo7_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: ${DB_NAME:-geo7}
+      MYSQL_USER: ${DB_USER:-geo7user}
+      MYSQL_PASSWORD: ${DB_PASS:-geo7pass}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - geo7_network
+
+  # phpMyAdmin — адміністрування бази даних
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: geo7_phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: ${DB_USER:-geo7user}
+      PMA_PASSWORD: ${DB_PASS:-geo7pass}
+    depends_on:
+      - mysql
+    restart: unless-stopped
+    networks:
+      - geo7_network
+
+# Мережа для комунікації між контейнерами
+networks:
+  geo7_network:
+    driver: bridge
+
+# Persistent volume для даних MySQL
+volumes:
+  mysql_data:

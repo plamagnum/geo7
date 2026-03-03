@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Geo7 — веб-додаток для тестів з географії 7 класу">
+  <title>Geo7 — Тести з географії</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+
+  <!-- ============================================================
+       Шапка сайту (header)
+       ============================================================ -->
+  <header class="header">
+    <!-- Логотип -->
+    <div class="header__logo" id="header-logo">
+      <span>🌍</span>
+      <span>Geo7</span>
+    </div>
+
+    <!-- Навігація (десктоп) -->
+    <nav class="header__nav" id="main-nav">
+      <button class="btn-nav" id="btn-topics">🗺️ Теми</button>
+      <button class="btn-nav" id="btn-results-nav">📊 Результати</button>
+      <button class="btn-nav hidden" id="btn-admin-nav">⚙️ Адмін</button>
+    </nav>
+
+    <!-- Дії у шапці -->
+    <div class="header__actions">
+      <span class="header__user" id="header-username"></span>
+      <button class="btn-nav" id="btn-logout" style="display:none">🚪 Вихід</button>
+      <button class="btn-theme" id="btn-theme" title="Змінити тему">🌙</button>
+      <!-- Гамбургер-меню (мобільний) -->
+      <button class="btn-hamburger" id="btn-hamburger" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       Мобільне меню
+       ============================================================ -->
+  <div class="mobile-menu" id="mobile-menu">
+    <button class="btn-nav" id="mob-topics">🗺️ Теми</button>
+    <button class="btn-nav" id="mob-results">📊 Результати</button>
+    <button class="btn-nav hidden" id="mob-admin">⚙️ Адмін</button>
+    <button class="btn-nav" id="mob-logout">🚪 Вихід</button>
+  </div>
+
+  <!-- ============================================================
+       Основний контент
+       ============================================================ -->
+  <main class="main">
+
+    <!-- ===========================================================
+         Секція авторизації
+         =========================================================== -->
+    <section class="section is-active" id="section-auth">
+      <div class="auth-wrapper">
+        <div class="card auth-card">
+          <div class="auth-card__title">🌍 Geo7</div>
+          <div class="auth-card__subtitle">Тести з географії для 7 класу</div>
+
+          <!-- Вкладки Вхід / Реєстрація -->
+          <div class="auth-tabs">
+            <button class="auth-tab active" id="btn-login-tab">Вхід</button>
+            <button class="auth-tab" id="btn-register-tab">Реєстрація</button>
+          </div>
+
+          <!-- Форма входу -->
+          <div id="form-login">
+            <div class="form-group">
+              <label class="form-label" for="login-username">Ім'я користувача</label>
+              <input class="form-input" type="text" id="login-username"
+                     placeholder="Введіть ім'я" autocomplete="username">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="login-password">Пароль</label>
+              <input class="form-input" type="password" id="login-password"
+                     placeholder="Введіть пароль" autocomplete="current-password">
+            </div>
+            <div class="alert alert-error hidden" id="login-error"></div>
+            <button class="btn btn-primary btn-block" type="button" id="btn-login">Увійти</button>
+          </div>
+
+          <!-- Форма реєстрації -->
+          <div class="hidden" id="form-register">
+            <div class="form-group">
+              <label class="form-label" for="register-username">Ім'я користувача</label>
+              <input class="form-input" type="text" id="register-username"
+                     placeholder="Від 3 символів" autocomplete="username">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="register-password">Пароль</label>
+              <input class="form-input" type="password" id="register-password"
+                     placeholder="Від 4 символів" autocomplete="new-password">
+            </div>
+            <div class="alert alert-error hidden" id="register-error"></div>
+            <button class="btn btn-primary btn-block" type="button" id="btn-register">Зареєструватись</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         Секція вибору теми
+         =========================================================== -->
+    <section class="section" id="section-topics">
+      <h1 class="page-title">🗺️ Оберіть тему</h1>
+      <p class="page-subtitle">Виберіть тему та пройдіть тест</p>
+      <div id="topics-container">
+        <div class="loading-state"><div class="spinner"></div></div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         Секція тесту
+         =========================================================== -->
+    <section class="section" id="section-quiz">
+      <div class="quiz-header">
+        <span class="quiz-title" id="quiz-topic-title">🌍 Тема</span>
+        <span class="quiz-counter" id="quiz-counter">1 / 10</span>
+      </div>
+
+      <!-- Прогрес-бар -->
+      <div class="progress-bar">
+        <div class="progress-bar__fill" id="quiz-progress-fill" style="width:0%"></div>
+      </div>
+
+      <!-- Картка запитання -->
+      <div class="card question-card">
+        <p class="question-text" id="quiz-question-text"></p>
+        <div class="options-list" id="quiz-options-list"></div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         Секція результату тесту
+         =========================================================== -->
+    <section class="section" id="section-result">
+      <div class="card result-card">
+        <div class="result-icon" id="result-icon">🏆</div>
+        <div class="result-score" id="result-score">0 / 0</div>
+        <div class="result-message" id="result-message">Молодець!</div>
+        <div class="result-actions">
+          <button class="btn btn-primary" id="btn-result-retry">🔄 Ще раз</button>
+          <button class="btn btn-outline" id="btn-result-topics">🗺️ Теми</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         Секція результатів (таблиця)
+         =========================================================== -->
+    <section class="section" id="section-results">
+      <h1 class="page-title" id="results-title">📊 Результати</h1>
+      <div class="card mt-2">
+        <div class="results-table-wrap">
+          <table class="results-table">
+            <thead>
+              <tr id="results-header">
+                <!-- Стовпець "Учень" показується тільки для адміна (додається через JS) -->
+                <th>Тема</th>
+                <th>Результат</th>
+                <th>%</th>
+                <th>Дата</th>
+              </tr>
+            </thead>
+            <tbody id="results-tbody">
+              <tr><td colspan="4" class="loading-state"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         Секція адмін-панелі
+         =========================================================== -->
+    <section class="section" id="section-admin">
+      <h1 class="page-title">⚙️ Адмін-панель</h1>
+
+      <!-- Вкладки адмін-панелі -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="topics">📚 Теми</button>
+        <button class="admin-tab"        data-tab="questions">❓ Запитання</button>
+        <button class="admin-tab"        data-tab="users">👥 Користувачі</button>
+        <button class="admin-tab"        data-tab="import">📥 Імпорт</button>
+      </div>
+
+      <!-- =====================================================
+           Панель: Теми
+           ===================================================== -->
+      <div class="admin-panel is-active" data-panel="topics">
+        <div class="section-header">
+          <h2>📚 Управління темами</h2>
+          <button class="btn btn-primary btn-sm" id="btn-add-topic">+ Нова тема</button>
+        </div>
+        <div class="card">
+          <div class="results-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Назва</th>
+                  <th>Запитань</th>
+                  <th>Дії</th>
+                </tr>
+              </thead>
+              <tbody id="topics-tbody">
+                <tr><td colspan="4" class="loading-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           Панель: Запитання
+           ===================================================== -->
+      <div class="admin-panel" data-panel="questions">
+        <div class="section-header">
+          <h2>❓ Управління запитаннями</h2>
+          <div class="flex gap-1 wrap">
+            <!-- Фільтр по темі -->
+            <select class="form-select" id="filter-topic" style="max-width:200px">
+              <option value="">Всі теми</option>
+            </select>
+            <button class="btn btn-primary btn-sm" id="btn-add-question">+ Нове запитання</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="results-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Тема</th>
+                  <th>Запитання</th>
+                  <th>Відповідь</th>
+                  <th>Дії</th>
+                </tr>
+              </thead>
+              <tbody id="questions-tbody">
+                <tr><td colspan="5" class="empty-state">Оберіть тему або завантажте всі</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           Панель: Користувачі
+           ===================================================== -->
+      <div class="admin-panel" data-panel="users">
+        <div class="section-header">
+          <h2>👥 Управління користувачами</h2>
+        </div>
+        <div class="card">
+          <div class="results-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Ім'я</th>
+                  <th>Роль</th>
+                  <th>Дії</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody">
+                <tr><td colspan="4" class="loading-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           Панель: Імпорт
+           ===================================================== -->
+      <div class="admin-panel" data-panel="import">
+        <h2 class="mb-2">📥 Імпорт запитань</h2>
+
+        <!-- Формат JSON для довідки -->
+        <div class="card mb-2">
+          <h3 class="mb-1">📋 Очікуваний формат JSON</h3>
+          <pre style="background:var(--bg-sidebar);padding:1rem;border-radius:var(--radius-sm);
+                      overflow-x:auto;font-size:.8rem;line-height:1.5">
+{
+  "topic": "Назва теми",
+  "questions": [
+    {
+      "question": "Текст запитання?",
+      "options": ["Варіант A", "Варіант B", "Варіант C", "Варіант D"],
+      "correct": 0
+    }
+  ]
+}</pre>
+          <p class="form-hint mt-1">
+            Поле <code>correct</code> — індекс правильної відповіді (0=A, 1=B, 2=C, 3=D)
+          </p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr;gap:1rem">
+          <!-- Імпорт з URL -->
+          <div class="card">
+            <h3 class="mb-2">🔗 Імпорт з URL</h3>
+            <div class="form-group">
+              <label class="form-label" for="import-url">URL JSON-файлу</label>
+              <input class="form-input" type="url" id="import-url"
+                     placeholder="https://example.com/questions.json">
+            </div>
+            <button class="btn btn-primary" id="btn-import-url">📥 Завантажити</button>
+            <div class="hidden" id="import-result"></div>
+          </div>
+
+          <!-- Імпорт з JSON тексту -->
+          <div class="card">
+            <h3 class="mb-2">📝 Вставити JSON вручну</h3>
+            <div class="form-group">
+              <label class="form-label" for="import-json">JSON дані</label>
+              <textarea class="form-textarea" id="import-json"
+                        placeholder='{"topic": "...", "questions": [...]}'
+                        style="min-height:180px"></textarea>
+            </div>
+            <button class="btn btn-primary" id="btn-import-json">📥 Імпортувати</button>
+            <div class="hidden" id="import-result-json"></div>
+          </div>
+        </div>
+      </div>
+
+    </section><!-- /section-admin -->
+
+  </main>
+
+  <!-- ============================================================
+       Модальне вікно: Нова/редагувати тема
+       ============================================================ -->
+  <div class="modal-overlay" id="modal-topic">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modal-topic-title">Нова тема</h2>
+        <button class="modal__close" aria-label="Закрити">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="topic-name">Назва теми *</label>
+        <input class="form-input" type="text" id="topic-name" placeholder="Назва теми">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="topic-description">Опис</label>
+        <textarea class="form-textarea" id="topic-description"
+                  placeholder="Короткий опис теми"></textarea>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn-outline btn-modal-cancel">Скасувати</button>
+        <button class="btn btn-primary" id="btn-save-topic">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Модальне вікно: Нове/редагувати запитання
+       ============================================================ -->
+  <div class="modal-overlay" id="modal-question">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modal-question-title">Нове запитання</h2>
+        <button class="modal__close" aria-label="Закрити">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="q-topic_id">Тема *</label>
+        <select class="form-select topics-select" id="q-topic_id">
+          <option value="">— Оберіть тему —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="q-question_text">Текст запитання *</label>
+        <textarea class="form-textarea" id="q-question_text"
+                  placeholder="Текст запитання?" style="min-height:80px"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+        <div class="form-group">
+          <label class="form-label" for="q-option_a">Варіант A *</label>
+          <input class="form-input" type="text" id="q-option_a" placeholder="Варіант A">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="q-option_b">Варіант B *</label>
+          <input class="form-input" type="text" id="q-option_b" placeholder="Варіант B">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="q-option_c">Варіант C *</label>
+          <input class="form-input" type="text" id="q-option_c" placeholder="Варіант C">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="q-option_d">Варіант D *</label>
+          <input class="form-input" type="text" id="q-option_d" placeholder="Варіант D">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="q-correct_option">Правильна відповідь *</label>
+        <select class="form-select" id="q-correct_option">
+          <option value="">— Оберіть —</option>
+          <option value="a">A</option>
+          <option value="b">B</option>
+          <option value="c">C</option>
+          <option value="d">D</option>
+        </select>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn-outline btn-modal-cancel">Скасувати</button>
+        <button class="btn btn-primary" id="btn-save-question">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Скрипти (порядок важливий: спочатку модулі, потім app.js)
+       ============================================================ -->
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/quiz.js"></script>
+  <script src="/assets/js/admin.js"></script>
+  <script src="/assets/js/app.js"></script>
+
+</body>
+</html>
