@@ -47,15 +47,32 @@ const Auth = (() => {
   }
 
   /**
+   * Завантажити список класів і заповнити select у формі реєстрації
+   */
+  async function loadClassesForRegister() {
+    try {
+      const res     = await fetch('/api/classes.php');
+      const classes = await res.json();
+      const sel     = document.getElementById('register-class');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">— Оберіть клас —</option>' +
+        classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    } catch {
+      // Ігноруємо помилку — поле залишається з порожнім вибором
+    }
+  }
+
+  /**
    * Реєстрація нового користувача
    * @param {string} username
    * @param {string} password
+   * @param {number|null} classId
    */
-  async function register(username, password) {
+  async function register(username, password, classId = null) {
     const res  = await fetch('/api/auth.php?action=register', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ username, password }),
+      body:    JSON.stringify({ username, password, class_id: classId }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Помилка реєстрації');
@@ -88,5 +105,5 @@ const Auth = (() => {
     currentUser = null;
   }
 
-  return { getUser, isLoggedIn, isAdmin, checkSession, register, login, logout };
+  return { getUser, isLoggedIn, isAdmin, checkSession, loadClassesForRegister, register, login, logout };
 })();

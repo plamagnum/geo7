@@ -6,6 +6,26 @@
 USE geo7;
 
 -- ============================================================
+-- Таблиця предметів
+-- ============================================================
+CREATE TABLE IF NOT EXISTS subjects (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- Таблиця класів
+-- ============================================================
+CREATE TABLE IF NOT EXISTS classes (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
 -- Таблиця користувачів
 -- ============================================================
 CREATE TABLE IF NOT EXISTS users (
@@ -13,7 +33,9 @@ CREATE TABLE IF NOT EXISTS users (
     username      VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role          ENUM('student', 'admin') DEFAULT 'student',
-    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    class_id      INT DEFAULT NULL,
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -23,7 +45,9 @@ CREATE TABLE IF NOT EXISTS topics (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(255) NOT NULL,
     description TEXT,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    subject_id  INT DEFAULT NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -57,6 +81,33 @@ CREATE TABLE IF NOT EXISTS quiz_results (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
+-- Таблиця онлайн-сесій користувачів
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_sessions (
+    id            INT AUTO_INCREMENT PRIMARY KEY,
+    user_id       INT NOT NULL,
+    login_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    logout_at     TIMESTAMP NULL DEFAULT NULL,
+    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_online     TINYINT(1) DEFAULT 1,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- Seed-дані: предмети
+-- ============================================================
+INSERT INTO subjects (id, name, description) VALUES
+(1, 'Географія', 'Географія для 7 класу — материки, океани, клімат, населення');
+
+-- ============================================================
+-- Seed-дані: класи
+-- ============================================================
+INSERT INTO classes (id, name, description) VALUES
+(1, '7-А', 'Сьомий клас, група А'),
+(2, '7-Б', 'Сьомий клас, група Б'),
+(3, '7-В', 'Сьомий клас, група В');
+
+-- ============================================================
 -- Seed-дані: адміністратор
 -- Пароль: admin123 (bcrypt hash)
 -- ============================================================
@@ -64,13 +115,13 @@ INSERT INTO users (username, password_hash, role) VALUES
 ('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
 
 -- ============================================================
--- Seed-дані: теми з географії 7 класу
+-- Seed-дані: теми з географії 7 класу (прив'язані до предмету "Географія")
 -- ============================================================
-INSERT INTO topics (id, name, description) VALUES
-(1, 'Материки та океани', 'Основні материки та океани Землі, їх характеристики та розташування'),
-(2, 'Клімат Землі', 'Кліматичні пояси, типи клімату та кліматоутворюючі фактори'),
-(3, 'Населення світу', 'Чисельність, розміщення та особливості населення різних регіонів світу'),
-(4, 'Природні зони Землі', 'Основні природні зони, їх флора, фауна та географічне розташування');
+INSERT INTO topics (id, name, description, subject_id) VALUES
+(1, 'Материки та океани', 'Основні материки та океани Землі, їх характеристики та розташування', 1),
+(2, 'Клімат Землі', 'Кліматичні пояси, типи клімату та кліматоутворюючі фактори', 1),
+(3, 'Населення світу', 'Чисельність, розміщення та особливості населення різних регіонів світу', 1),
+(4, 'Природні зони Землі', 'Основні природні зони, їх флора, фауна та географічне розташування', 1);
 
 -- ============================================================
 -- Seed-дані: запитання — Тема 1: Материки та океани
