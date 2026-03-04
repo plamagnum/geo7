@@ -1,14 +1,20 @@
 # PHP-FPM Dockerfile для Geo7
 FROM php:8.2-fpm
 
-# Встановлення системних залежностей
+# Встановлення системних залежностей та локалі для підтримки кирилиці
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
     curl \
     unzip \
+    locales \
+    && sed -i '/uk_UA.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen \
     && rm -rf /var/lib/apt/lists/*
+
+ENV LANG uk_UA.UTF-8
+ENV LC_ALL uk_UA.UTF-8
 
 # Встановлення PHP розширень
 RUN docker-php-ext-install pdo pdo_mysql mysqli
