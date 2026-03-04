@@ -28,7 +28,10 @@ $pdoOptions = [
 function getDbConnection(): PDO {
     global $dsn, $dbUser, $dbPass, $pdoOptions;
     try {
-        return new PDO($dsn, $dbUser, $dbPass, $pdoOptions);
+        $pdo = new PDO($dsn, $dbUser, $dbPass, $pdoOptions);
+        // Примусово встановлюємо кодування UTF-8 для коректної роботи з кирилицею
+        $pdo->exec("SET NAMES utf8mb4");
+        return $pdo;
     } catch (PDOException $e) {
         // Логуємо помилку та повертаємо зрозуміле повідомлення
         error_log("Помилка підключення до БД: " . $e->getMessage());
