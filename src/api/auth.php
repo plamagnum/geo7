@@ -49,13 +49,14 @@ switch ($action) {
 /**
  * Реєстрація нового користувача
  * POST ?action=register
- * Body: { username, password }
+ * Body: { username, password, class_id }
  */
 function handleRegister(): void {
     // Отримуємо дані з тіла запиту
-    $data = json_decode(file_get_contents('php://input'), true);
+    $data     = json_decode(file_get_contents('php://input'), true);
     $username = trim($data['username'] ?? '');
     $password = $data['password'] ?? '';
+    $classId  = isset($data['class_id']) && $data['class_id'] !== '' ? (int)$data['class_id'] : null;
 
     // Валідація вхідних даних
     if (empty($username) || empty($password)) {
@@ -92,17 +93,20 @@ function handleRegister(): void {
     // Хешуємо пароль за допомогою bcrypt
     $passwordHash = password_hash($password, PASSWORD_BCRYPT);
 
-    // Додаємо нового користувача
+    // Додаємо нового користувача з вибраним класом
     $stmt = $pdo->prepare(
-        'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)'
+        'INSERT INTO users (username, password_hash, role, class_id) VALUES (?, ?, ?, ?)'
     );
-    $stmt->execute([$username, $passwordHash, 'student']);
+    $stmt->execute([$username, $passwordHash, 'student', $classId]);
     $userId = (int)$pdo->lastInsertId();
 
     // Автоматичний вхід після реєстрації
     $_SESSION['user_id']   = $userId;
     $_SESSION['username']  = $username;
     $_SESSION['user_role'] = 'student';
+
+    // Створюємо запис сесії
+    createUserSession($pdo, $userId);
 
     echo json_encode([
         'success'  => true,
@@ -149,6 +153,9 @@ function handleLogin(): void {
     $_SESSION['username']  = $user['username'];
     $_SESSION['user_role'] = $user['role'];
 
+    // Створюємо запис сесії для відстеження онлайн-статусу
+    createUserSession($pdo, (int)$user['id']);
+
     echo json_encode([
         'success' => true,
         'user'    => [
@@ -160,11 +167,24 @@ function handleLogin(): void {
 }
 
 /**
- * Перевірка поточної сесії
+ * Перевірка поточної сесії та оновлення last_activity
  * GET ?action=check
  */
 function handleCheck(): void {
     if (!empty($_SESSION['user_id'])) {
+        // Оновлюємо last_activity у всіх активних сесіях користувача
+        try {
+            $pdo  = getDbConnection();
+            $stmt = $pdo->prepare(
+                'UPDATE user_sessions SET last_activity = NOW()
+                 WHERE user_id = ? AND is_online = 1'
+            );
+            $stmt->execute([$_SESSION['user_id']]);
+        } catch (Exception $e) {
+            // Не критична помилка — логуємо та продовжуємо
+            error_log('Помилка оновлення last_activity: ' . $e->getMessage());
+        }
+
         echo json_encode([
             'authenticated' => true,
             'user'          => [
@@ -183,6 +203,20 @@ function handleCheck(): void {
  * POST ?action=logout
  */
 function handleLogout(): void {
+    // Закриваємо активну сесію в БД
+    if (!empty($_SESSION['user_id'])) {
+        try {
+            $pdo  = getDbConnection();
+            $stmt = $pdo->prepare(
+                'UPDATE user_sessions SET is_online = 0, logout_at = NOW()
+                 WHERE user_id = ? AND is_online = 1'
+            );
+            $stmt->execute([$_SESSION['user_id']]);
+        } catch (Exception $e) {
+            error_log('Помилка закриття сесії: ' . $e->getMessage());
+        }
+    }
+
     // Очищаємо дані сесії
     $_SESSION = [];
 
@@ -204,4 +238,27 @@ function handleLogout(): void {
     session_destroy();
 
     echo json_encode(['success' => true]);
+}
+
+/**
+ * Створити новий запис онлайн-сесії для користувача
+ * Закриває всі попередні активні сесії
+ */
+function createUserSession(PDO $pdo, int $userId): void {
+    try {
+        // Закриваємо попередні активні сесії
+        $stmt = $pdo->prepare(
+            'UPDATE user_sessions SET is_online = 0, logout_at = NOW()
+             WHERE user_id = ? AND is_online = 1'
+        );
+        $stmt->execute([$userId]);
+
+        // Створюємо новий запис сесії
+        $stmt = $pdo->prepare(
+            'INSERT INTO user_sessions (user_id, is_online) VALUES (?, 1)'
+        );
+        $stmt->execute([$userId]);
+    } catch (Exception $e) {
+        error_log('Помилка створення сесії: ' . $e->getMessage());
+    }
 }

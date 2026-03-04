@@ -85,7 +85,10 @@ const App = (() => {
 
     // Кнопки авторизації
     document.getElementById('btn-login-tab')?.addEventListener('click', () => switchAuthTab('login'));
-    document.getElementById('btn-register-tab')?.addEventListener('click', () => switchAuthTab('register'));
+    document.getElementById('btn-register-tab')?.addEventListener('click', () => {
+      switchAuthTab('register');
+      Auth.loadClassesForRegister();
+    });
     document.getElementById('btn-login')?.addEventListener('click', handleLogin);
     document.getElementById('btn-register')?.addEventListener('click', handleRegister);
 
@@ -122,15 +125,24 @@ const App = (() => {
       Admin.loadQuestions(e.target.value);
     });
 
+    // Фільтр онлайн-панелі по класу
+    document.getElementById('filter-online-class')?.addEventListener('change', e => {
+      Admin.loadOnlineStudents(e.target.value);
+    });
+
     // Кнопки відкриття модальних вікон (адмін)
     document.getElementById('btn-add-topic')?.addEventListener('click', () => Admin.openTopicModal());
     document.getElementById('btn-add-question')?.addEventListener('click', () => Admin.openQuestionModal());
+    document.getElementById('btn-add-class')?.addEventListener('click', () => Admin.openClassModal());
+    document.getElementById('btn-add-subject')?.addEventListener('click', () => Admin.openSubjectModal());
     document.getElementById('btn-import-url')?.addEventListener('click', () => Admin.importFromUrl());
     document.getElementById('btn-import-json')?.addEventListener('click', () => Admin.importFromJson());
 
     // Збереження форм модальних вікон
     document.getElementById('btn-save-topic')?.addEventListener('click', () => Admin.saveTopic());
     document.getElementById('btn-save-question')?.addEventListener('click', () => Admin.saveQuestion());
+    document.getElementById('btn-save-class')?.addEventListener('click', () => Admin.saveClass());
+    document.getElementById('btn-save-subject')?.addEventListener('click', () => Admin.saveSubject());
 
     // Закриття модальних вікон
     document.querySelectorAll('.modal__close, .btn-modal-cancel').forEach(btn => {
@@ -190,6 +202,7 @@ const App = (() => {
   async function handleRegister() {
     const username = document.getElementById('register-username')?.value.trim();
     const password = document.getElementById('register-password')?.value;
+    const classId  = document.getElementById('register-class')?.value || null;
     const errEl    = document.getElementById('register-error');
 
     if (errEl) errEl.textContent = '';
@@ -200,7 +213,7 @@ const App = (() => {
     }
 
     try {
-      const user = await Auth.register(username, password);
+      const user = await Auth.register(username, password, classId ? parseInt(classId) : null);
       onAuthSuccess(user);
     } catch (err) {
       if (errEl) errEl.textContent = err.message;
@@ -235,6 +248,9 @@ const App = (() => {
         headerRow.insertBefore(th, headerRow.firstChild);
       }
     }
+
+    // Запускаємо heartbeat — оновлюємо активність кожні 60 секунд
+    setInterval(() => fetch('/api/auth.php?action=check'), 60000);
 
     // Очищаємо поля форм авторизації
     ['login-username', 'login-password', 'register-username', 'register-password'].forEach(id => {
@@ -395,6 +411,9 @@ const App = (() => {
     // Завантажуємо дані при першому переході на вкладку
     if (tab === 'questions') Admin.loadQuestions();
     if (tab === 'users')     Admin.loadUsers();
+    if (tab === 'classes')   Admin.loadClasses();
+    if (tab === 'subjects')  Admin.loadSubjects();
+    if (tab === 'online')    Admin.loadOnlineStudents();
   }
 
   // ============================================================

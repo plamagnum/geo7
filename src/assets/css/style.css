@@ -1052,3 +1052,31 @@ a:hover {
 .wrap  { flex-wrap: wrap; }
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
+
+/* ============================================================
+   Онлайн-статус учнів
+   ============================================================ */
+
+/* Індикатор онлайн-статусу */
+.status-online {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  color: var(--color-secondary);
+  font-weight: 600;
+}
+
+.status-offline {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  color: var(--color-wrong);
+  font-weight: 600;
+}
+
+/* Маленький select у таблиці користувачів */
+.form-select-sm {
+  padding: .25rem .5rem;
+  font-size: .8rem;
+  min-width: 100px;
+}

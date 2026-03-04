@@ -1,10 +1,10 @@
 <?php
 /**
- * API для управління темами (CRUD)
- * GET    — список тем
- * POST   — створення теми (адмін)
- * PUT    — оновлення теми (адмін)
- * DELETE — видалення теми (адмін)
+ * API управління класами (CRUD)
+ * GET    — список всіх класів
+ * POST   — створити клас (адмін)
+ * PUT    — оновити клас (адмін)
+ * DELETE — видалити клас (адмін)
  */
 
 require_once __DIR__ . '/../config/database.php';
@@ -28,19 +28,19 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        getTopics();
+        getClasses();
         break;
     case 'POST':
         requireAdmin();
-        createTopic();
+        createClass();
         break;
     case 'PUT':
         requireAdmin();
-        updateTopic();
+        updateClass();
         break;
     case 'DELETE':
         requireAdmin();
-        deleteTopic();
+        deleteClass();
         break;
     default:
         http_response_code(405);
@@ -59,52 +59,49 @@ function requireAdmin(): void {
 }
 
 /**
- * Отримати список всіх тем з кількістю запитань та назвою предмету
- * GET /api/topics.php
+ * Отримати список всіх класів з кількістю учнів
+ * GET /api/classes.php
  */
-function getTopics(): void {
-    $pdo = getDbConnection();
+function getClasses(): void {
+    $pdo  = getDbConnection();
     $stmt = $pdo->query(
-        'SELECT t.id, t.name, t.description, t.subject_id, s.name AS subject_name, t.created_at,
-                COUNT(q.id) AS question_count
-         FROM topics t
-         LEFT JOIN questions q ON q.topic_id = t.id
-         LEFT JOIN subjects s ON s.id = t.subject_id
-         GROUP BY t.id
-         ORDER BY t.id ASC'
+        'SELECT c.id, c.name, c.description, c.created_at,
+                COUNT(u.id) AS student_count
+         FROM classes c
+         LEFT JOIN users u ON u.class_id = c.id
+         GROUP BY c.id
+         ORDER BY c.id ASC'
     );
-    $topics = $stmt->fetchAll();
+    $classes = $stmt->fetchAll();
 
     // Конвертуємо числові поля
-    foreach ($topics as &$topic) {
-        $topic['id']             = (int)$topic['id'];
-        $topic['question_count'] = (int)$topic['question_count'];
-        $topic['subject_id']     = $topic['subject_id'] !== null ? (int)$topic['subject_id'] : null;
+    foreach ($classes as &$class) {
+        $class['id']            = (int)$class['id'];
+        $class['student_count'] = (int)$class['student_count'];
     }
 
-    echo json_encode($topics);
+    echo json_encode($classes);
 }
 
 /**
- * Створити нову тему
- * POST /api/topics.php
- * Body: { name, description, subject_id }
+ * Створити новий клас
+ * POST /api/classes.php
+ * Body: { name, description }
  */
-function createTopic(): void {
+function createClass(): void {
     $data        = json_decode(file_get_contents('php://input'), true);
     $name        = trim($data['name'] ?? '');
     $description = trim($data['description'] ?? '');
-    $subjectId   = isset($data['subject_id']) && $data['subject_id'] !== '' ? (int)$data['subject_id'] : null;
 
     if (empty($name)) {
         http_response_code(400);
-        echo json_encode(['error' => 'Назва теми обов\'язкова']);
+        echo json_encode(['error' => 'Назва класу обов\'язкова']);
         return;
     }
 
     $pdo  = getDbConnection();
-    $stmt = $pdo->prepare('INSERT INTO topics (name, description, subject_id) VALUES (?, ?, ?)');
-    $stmt->execute([$name, $description, $subjectId]);
+    $stmt = $pdo->prepare('INSERT INTO classes (name, description) VALUES (?, ?)');
+    $stmt->execute([$name, $description]);
     $id = (int)$pdo->lastInsertId();
 
     http_response_code(201);
@@ -112,30 +109,29 @@ function createTopic(): void {
 }
 
 /**
- * Оновити існуючу тему
- * PUT /api/topics.php
- * Body: { id, name, description, subject_id }
+ * Оновити існуючий клас
+ * PUT /api/classes.php
+ * Body: { id, name, description }
  */
-function updateTopic(): void {
+function updateClass(): void {
     $data        = json_decode(file_get_contents('php://input'), true);
     $id          = (int)($data['id'] ?? 0);
     $name        = trim($data['name'] ?? '');
     $description = trim($data['description'] ?? '');
-    $subjectId   = isset($data['subject_id']) && $data['subject_id'] !== '' ? (int)$data['subject_id'] : null;
 
     if (!$id || empty($name)) {
         http_response_code(400);
-        echo json_encode(['error' => 'ID та назва теми обов\'язкові']);
+        echo json_encode(['error' => 'ID та назва класу обов\'язкові']);
         return;
     }
 
     $pdo  = getDbConnection();
-    $stmt = $pdo->prepare('UPDATE topics SET name = ?, description = ?, subject_id = ? WHERE id = ?');
-    $stmt->execute([$name, $description, $subjectId, $id]);
+    $stmt = $pdo->prepare('UPDATE classes SET name = ?, description = ? WHERE id = ?');
+    $stmt->execute([$name, $description, $id]);
 
     if ($stmt->rowCount() === 0) {
         http_response_code(404);
-        echo json_encode(['error' => 'Тема не знайдена']);
+        echo json_encode(['error' => 'Клас не знайдено']);
         return;
     }
 
@@ -143,27 +139,27 @@ function updateTopic(): void {
 }
 
 /**
- * Видалити тему
- * DELETE /api/topics.php
+ * Видалити клас
+ * DELETE /api/classes.php
  * Body: { id }
  */
-function deleteTopic(): void {
+function deleteClass(): void {
     $data = json_decode(file_get_contents('php://input'), true);
     $id   = (int)($data['id'] ?? 0);
 
     if (!$id) {
         http_response_code(400);
-        echo json_encode(['error' => 'ID теми обов\'язковий']);
+        echo json_encode(['error' => 'ID класу обов\'язковий']);
         return;
     }
 
     $pdo  = getDbConnection();
-    $stmt = $pdo->prepare('DELETE FROM topics WHERE id = ?');
+    $stmt = $pdo->prepare('DELETE FROM classes WHERE id = ?');
     $stmt->execute([$id]);
 
     if ($stmt->rowCount() === 0) {
         http_response_code(404);
-        echo json_encode(['error' => 'Тема не знайдена']);
+        echo json_encode(['error' => 'Клас не знайдено']);
         return;
     }
 

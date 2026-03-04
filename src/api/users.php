@@ -47,33 +47,54 @@ switch ($method) {
 }
 
 /**
- * Отримати список всіх користувачів
+ * Отримати список всіх користувачів (з назвою класу)
  */
 function getUsers(): void {
     $pdo  = getDbConnection();
     $stmt = $pdo->query(
-        'SELECT id, username, role, created_at FROM users ORDER BY id ASC'
+        'SELECT u.id, u.username, u.role, u.class_id, c.name AS class_name, u.created_at
+         FROM users u
+         LEFT JOIN classes c ON c.id = u.class_id
+         ORDER BY u.id ASC'
     );
     $users = $stmt->fetchAll();
 
     foreach ($users as &$u) {
-        $u['id'] = (int)$u['id'];
+        $u['id']       = (int)$u['id'];
+        $u['class_id'] = $u['class_id'] !== null ? (int)$u['class_id'] : null;
     }
 
     echo json_encode($users);
 }
 
 /**
- * Змінити роль користувача
- * PUT Body: { id, role }
+ * Змінити роль або клас користувача
+ * PUT Body: { id, role } або { id, class_id }
  */
 function updateUserRole(): void {
     $data    = json_decode(file_get_contents('php://input'), true);
     $id      = (int)($data['id'] ?? 0);
-    $role    = $data['role'] ?? '';
     $adminId = (int)$_SESSION['user_id'];
 
-    if (!$id || !in_array($role, ['student', 'admin'])) {
+    if (!$id) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Невірні дані']);
+        return;
+    }
+
+    // Зміна класу учня
+    if (array_key_exists('class_id', $data)) {
+        $classId = $data['class_id'] !== null && $data['class_id'] !== '' ? (int)$data['class_id'] : null;
+        $pdo     = getDbConnection();
+        $stmt    = $pdo->prepare('UPDATE users SET class_id = ? WHERE id = ?');
+        $stmt->execute([$classId, $id]);
+        echo json_encode(['success' => true]);
+        return;
+    }
+
+    $role = $data['role'] ?? '';
+
+    if (!in_array($role, ['student', 'admin'])) {
         http_response_code(400);
         echo json_encode(['error' => 'Невірні дані']);
         return;

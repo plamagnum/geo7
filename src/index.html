@@ -96,6 +96,13 @@
               <input class="form-input" type="password" id="register-password"
                      placeholder="Від 4 символів" autocomplete="new-password">
             </div>
+            <div class="form-group">
+              <label class="form-label" for="register-class">Клас</label>
+              <select class="form-select" id="register-class">
+                <option value="">— Оберіть клас —</option>
+                <!-- Заповнюється динамічно через JS -->
+              </select>
+            </div>
             <div class="alert alert-error hidden" id="register-error"></div>
             <button class="btn btn-primary btn-block" type="button" id="btn-register">Зареєструватись</button>
           </div>
@@ -186,6 +193,9 @@
         <button class="admin-tab active" data-tab="topics">📚 Теми</button>
         <button class="admin-tab"        data-tab="questions">❓ Запитання</button>
         <button class="admin-tab"        data-tab="users">👥 Користувачі</button>
+        <button class="admin-tab"        data-tab="classes">🏫 Класи</button>
+        <button class="admin-tab"        data-tab="subjects">📖 Предмети</button>
+        <button class="admin-tab"        data-tab="online">🟢 Онлайн</button>
         <button class="admin-tab"        data-tab="import">📥 Імпорт</button>
       </div>
 
@@ -204,12 +214,13 @@
                 <tr>
                   <th>#</th>
                   <th>Назва</th>
+                  <th>Предмет</th>
                   <th>Запитань</th>
                   <th>Дії</th>
                 </tr>
               </thead>
               <tbody id="topics-tbody">
-                <tr><td colspan="4" class="loading-state"><div class="spinner"></div></td></tr>
+                <tr><td colspan="5" class="loading-state"><div class="spinner"></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -265,11 +276,99 @@
                   <th>#</th>
                   <th>Ім'я</th>
                   <th>Роль</th>
+                  <th>Клас</th>
                   <th>Дії</th>
                 </tr>
               </thead>
               <tbody id="users-tbody">
-                <tr><td colspan="4" class="loading-state"><div class="spinner"></div></td></tr>
+                <tr><td colspan="5" class="loading-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           Панель: Класи
+           ===================================================== -->
+      <div class="admin-panel" data-panel="classes">
+        <div class="section-header">
+          <h2>🏫 Управління класами</h2>
+          <button class="btn btn-primary btn-sm" id="btn-add-class">+ Новий клас</button>
+        </div>
+        <div class="card">
+          <div class="results-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Назва класу</th>
+                  <th>Опис</th>
+                  <th>Учнів</th>
+                  <th>Дії</th>
+                </tr>
+              </thead>
+              <tbody id="classes-tbody">
+                <tr><td colspan="5" class="loading-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           Панель: Предмети
+           ===================================================== -->
+      <div class="admin-panel" data-panel="subjects">
+        <div class="section-header">
+          <h2>📖 Управління предметами</h2>
+          <button class="btn btn-primary btn-sm" id="btn-add-subject">+ Новий предмет</button>
+        </div>
+        <div class="card">
+          <div class="results-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Назва предмету</th>
+                  <th>Опис</th>
+                  <th>Тем</th>
+                  <th>Дії</th>
+                </tr>
+              </thead>
+              <tbody id="subjects-tbody">
+                <tr><td colspan="5" class="loading-state"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           Панель: Онлайн-статус учнів
+           ===================================================== -->
+      <div class="admin-panel" data-panel="online">
+        <div class="section-header">
+          <h2>🟢 Онлайн-статус учнів</h2>
+          <select class="form-select" id="filter-online-class" style="max-width:180px">
+            <option value="">Всі класи</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="results-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Ім'я учня</th>
+                  <th>Клас</th>
+                  <th>Статус</th>
+                  <th>Останній вхід</th>
+                  <th>Останній вихід</th>
+                  <th>Остання активність</th>
+                </tr>
+              </thead>
+              <tbody id="online-tbody">
+                <tr><td colspan="6" class="loading-state"><div class="spinner"></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -352,9 +451,65 @@
         <textarea class="form-textarea" id="topic-description"
                   placeholder="Короткий опис теми"></textarea>
       </div>
+      <div class="form-group">
+        <label class="form-label" for="topic-subject">Предмет</label>
+        <select class="form-select" id="topic-subject">
+          <option value="">— Без предмету —</option>
+        </select>
+      </div>
       <div class="modal__footer">
         <button class="btn btn-outline btn-modal-cancel">Скасувати</button>
         <button class="btn btn-primary" id="btn-save-topic">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Модальне вікно: Новий/редагувати клас
+       ============================================================ -->
+  <div class="modal-overlay" id="modal-class">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modal-class-title">Новий клас</h2>
+        <button class="modal__close" aria-label="Закрити">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="class-name">Назва класу *</label>
+        <input class="form-input" type="text" id="class-name" placeholder="Наприклад: 7-А">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="class-description">Опис</label>
+        <textarea class="form-textarea" id="class-description"
+                  placeholder="Короткий опис класу"></textarea>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn-outline btn-modal-cancel">Скасувати</button>
+        <button class="btn btn-primary" id="btn-save-class">Зберегти</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Модальне вікно: Новий/редагувати предмет
+       ============================================================ -->
+  <div class="modal-overlay" id="modal-subject">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modal-subject-title">Новий предмет</h2>
+        <button class="modal__close" aria-label="Закрити">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="subject-name">Назва предмету *</label>
+        <input class="form-input" type="text" id="subject-name" placeholder="Наприклад: Географія">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="subject-description">Опис</label>
+        <textarea class="form-textarea" id="subject-description"
+                  placeholder="Короткий опис предмету"></textarea>
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn-outline btn-modal-cancel">Скасувати</button>
+        <button class="btn btn-primary" id="btn-save-subject">Зберегти</button>
       </div>
     </div>
   </div>
